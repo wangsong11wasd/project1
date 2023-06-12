@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>数据可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/3.0.0/mqtt.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <canvas id="chart"></canvas>
+
+    <script>
+        // 创建空的数据数组
+        var labels = [];
+        var data = [];
+
+        // 创建图表配置
+        var chartConfig = {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "实时数据",
+                    data: data,
+                    backgroundColor: "rgba(0, 123, 255, 0.4)",
+                    borderColor: "rgba(0, 123, 255, 1)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "时间"
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "湿度数值"
+                        }
+                    }
+                }
+            }
+        };
+
+        // 创建图表
+        var ctx = document.getElementById("chart").getContext("2d");
+        var chart = new Chart(ctx, chartConfig);
+
+        // 连接到 MQTT 代理服务器
+        var client = mqtt.connect("mqtt://112.124.53.200:8083/mqtt", {
+            clientId: "wangsong4",
+            username: "wangsong",
+            password: "123456"
+        });
+
+        // 当连接成功时执行
+        client.on("connect", function () {
+            console.log("Connected to MQTT broker");
+            // 订阅主题
+            client.subscribe("test3");
+        });
+
+        // 当收到新消息时执行
+        client.on("message", function (topic, message) {
+            var timestamp = new Date();
+            var value = parseFloat(message.toString());
+
+            // 添加新数据点
+            chartConfig.data.labels.push(timestamp);
+            chartConfig.data.datasets[0].data.push(value);
+
+            // 更新图表
+            chart.update();
+        });
+    </script>
+</body>
+</html>
